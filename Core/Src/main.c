@@ -21,12 +21,17 @@
 #include "i2c.h"
 #include "i2s.h"
 #include "spi.h"
+#include "usart.h"
 #include "usb_host.h"
 #include "gpio.h"
+#include <string.h>
+#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "BME280_STM32.h"
+char buffer[64] = {0};
+uint8_t count=0;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,7 +51,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+void uprintf(char *str){
+	if (HAL_UART_Transmit(&huart2, (uint8_t *) str, strlen(str), 100) != HAL_OK){
+	    	Error_Handler();
+	    }
+}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -98,6 +107,7 @@ int main(void)
   MX_I2S3_Init();
   MX_SPI1_Init();
   MX_USB_HOST_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   BME280_Config(OSRS_2, OSRS_16, OSRS_1, MODE_NORMAL, T_SB_0p5, IIR_16);
   if(HAL_I2C_IsDeviceReady(&hi2c1, 0xEC, 2, 10)==HAL_OK){
@@ -113,8 +123,15 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+
     BME280_Measure();
-    HAL_Delay(500);
+    count++;
+    sprintf(buffer, "\tTemperature: %.2f \tPressure: %.2f\tHumidity: %.2f\n", Temperature, Pressure, Humidity);
+    uprintf(buffer);
+//    if (HAL_UART_Transmit(&huart2, (uint8_t *)"Hello world\n", strlen("Hello world\n"), 100) != HAL_OK){
+//    	Error_Handler();
+//    }
+    HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
